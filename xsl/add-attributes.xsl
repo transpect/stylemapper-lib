@@ -46,7 +46,6 @@
       <xsl:value-of select="(1- number($cmyk[3])) * (1 - number($cmyk[4]))  * 255" ></xsl:value-of>
     </xsl:variable>
     <xsl:sequence select="$r, $g, $b"></xsl:sequence>
-<!--    <xsl:message select="'BLABLABLABLABLABLABLABLABLABLABLABLABLABLABLA', concat('rgb(',$r,',', $g,',', $b,')')"></xsl:message>        -->
   </xsl:function>
   
     <xsl:function name="tr:power">
@@ -78,7 +77,8 @@
     </xsl:function>
     
     <xsl:function name="tr:color2hsl" as="xs:string+">
-        <xsl:param name="in"></xsl:param>
+        <xsl:param name="in" as="xs:string?"></xsl:param>
+       <xsl:message select="'RGBV____INPUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUT', $in"></xsl:message>
         <xsl:variable name="rgb"  as="xs:string+">
            <xsl:choose>
                <xsl:when test="starts-with($in,'rgb')">
@@ -97,11 +97,15 @@
                 <xsl:sequence select="$rgb_v"></xsl:sequence>        
 <!--                <xsl:message select="'RGBV______VALUECMYK', $rgb_v"></xsl:message>-->
                </xsl:when>
-               <xsl:when test="$in[. = 'black']">
-                   <xsl:variable name="rgb_v" select="('0','0','0')" as="xs:string+"></xsl:variable>
-                   <xsl:sequence select="$rgb_v"></xsl:sequence>        
-<!--                   <xsl:message select="'RGBV______VALUE_____black', $rgb_v"></xsl:message>-->
+               <xsl:when test="$in[not(. = '^#')] or $in[not(. = '^rgb')]">
+                  <xsl:call-template name="names2rgb">
+                    <xsl:with-param name="name" select="$in"/>
+                  </xsl:call-template>
+                   <!--                   <xsl:message select="'RGBV______VALUE_____black', $rgb_v"></xsl:message>-->
                </xsl:when>
+               <xsl:otherwise>
+                <xsl:message select="'Unknown color.'"></xsl:message>
+              </xsl:otherwise>
            </xsl:choose>
        </xsl:variable>
         <xsl:message select="'RGBVALUE', $rgb"></xsl:message>
@@ -173,8 +177,29 @@
 <!--        <xsl:message select="'LLLLLLLLLLLLLLL', $h,'  ', $s,'  ', $l, '  ', $d"></xsl:message>-->
         <xsl:sequence select="(xs:string(round($h div 6 * 360)), xs:string(round($s * 100)), xs:string(round($l * 100)))"></xsl:sequence>
     </xsl:function>
+  
+    <xsl:template name="names2rgb">
+      <xsl:param name="name"></xsl:param>
+      <xsl:choose>
+        <xsl:when test="$name = 'black'">
+          <xsl:sequence select="('0','0','0')"></xsl:sequence>
+        </xsl:when>
+        <xsl:when test="$name = 'red'">
+          <xsl:sequence select="('255','0','0')"></xsl:sequence>
+        </xsl:when>
+        <xsl:when test="$name = 'green'">
+          <xsl:sequence select="('0','255','0')"></xsl:sequence>
+        </xsl:when>
+        <xsl:when test="$name = 'blue'">
+          <xsl:sequence select="('0','0','255')"></xsl:sequence>
+        </xsl:when>
+        <xsl:when test="$name = 'yellow'">
+          <xsl:sequence select="('200','100','0')"></xsl:sequence>
+        </xsl:when>
+      </xsl:choose>
+    </xsl:template>
     
-    <xsl:template match="phrase|para|css:rule" priority="2">
+    <xsl:template match="phrase|para" priority="2">
         <xsl:copy>
             <xsl:choose>
                 <xsl:when test="./@css:color">
