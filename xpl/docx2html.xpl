@@ -137,7 +137,7 @@
     <p:input port="other-params">
       <p:inline>
         <c:param-set>
-          <c:param name="overwrite-image-paths" value="no"/>
+          <c:param name="overwrite-image-paths" value="yes"/>
         </c:param-set>  
       </p:inline>
     </p:input>
