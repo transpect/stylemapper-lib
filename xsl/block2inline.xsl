@@ -34,6 +34,27 @@
     </xsl:choose>
   </xsl:template>
   
+  <xsl:template match="html:p[@srcpath]">
+    <xsl:copy>
+      <xsl:apply-templates select="@*"/>
+      <xsl:element name="span">
+        <xsl:attribute name="class" select="'prev pa'"/> ¶ 
+      </xsl:element>
+      <xsl:apply-templates select="node()"/>
+    </xsl:copy>
+  </xsl:template>
+  
+  <xsl:template match="html:span[@srcpath]">
+    <xsl:copy>
+    <xsl:apply-templates select="@*"/>  
+    <xsl:element name="span">
+      <xsl:attribute name="class" select="'prev in'"/>
+      T
+    </xsl:element>
+    <xsl:apply-templates select="node()"/>
+    </xsl:copy>
+  </xsl:template>
+  
   
     
 </xsl:stylesheet>
