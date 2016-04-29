@@ -37,6 +37,7 @@
   <xsl:template match="html:p[@srcpath]">
     <xsl:copy>
       <xsl:apply-templates select="@*"/>
+      <xsl:attribute name="data-view-priority"/>
       <xsl:element name="span">
         <xsl:attribute name="class" select="'prev pa'"/> ¶ 
       </xsl:element>
@@ -46,6 +47,7 @@
   
   <xsl:template match="html:span[@srcpath]">
     <xsl:copy>
+    <xsl:attribute name="data-view-priority"/>
     <xsl:apply-templates select="@*"/>  
     <xsl:element name="span">
       <xsl:attribute name="class" select="'prev in'"/>
