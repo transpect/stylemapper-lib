@@ -9,11 +9,12 @@
   exclude-result-prefixes="#all"
   xpath-default-namespace="http://docbook.org/ns/docbook"
   version="2.0">
-  <xsl:template match="*|@*">
+  <xsl:template match="*|@*" mode="#default remove-marked-para">
     <xsl:copy>
-      <xsl:apply-templates select="@*|node()"/>
+      <xsl:apply-templates select="@*|node()" mode="#current"/>
     </xsl:copy>
   </xsl:template>
+  
   <xsl:function name="css:length-to-double" as="xs:double">
     <xsl:param name="length" as="xs:string?"/>
     <xsl:sequence select="(
@@ -23,14 +24,14 @@
                           )[1]"/>
   </xsl:function>
 <!--  summarize all height relevant @ from following empty paragraphs and add the result to the preceeding paragraphs @margin-bottom -->
-  <xsl:template match="para[following-sibling::para[1][not(./node()) and not(./text())]][exists(./text())]">
+  <xsl:template match="para[following-sibling::para[1][not(./node()) and not(./text())]][exists(./text()) or ./local-name() = 'figure']">
     <xsl:copy>
       <xsl:variable name="position"
-        select="count(preceding-sibling::para[following-sibling::para[1][not(./node()) and not(./text())]][exists(./text())])+ (if (//para[1][not(exists(./text()))]) then 2 else 1)"
+        select="count(preceding-sibling::para[following-sibling::para[1][not(./node()) and not(./text())]][exists(./text())])+ (if (//para[1][descendant-or-self::node()[matches(., '^\s*$') or ./local-name() = 'figure']][matches(., '^\s*$')]) then 2 else 1)"
       />
       <xsl:apply-templates select="@*"></xsl:apply-templates>
       <xsl:variable name="computed_space" as="xs:double*">
-      <xsl:for-each-group select="../para[not(./node()) and not(./text())]" group-ending-with="para[following-sibling::para[1][exists(./text())]]">
+      <xsl:for-each-group select="../para[descendant-or-self::node()[matches(., '^\s*$') or exists(./figure)]][matches(., '^\s*$')]" group-ending-with="para[following-sibling::para[1][exists(./text()) or ./local-name() = 'figure']]">
           <xsl:variable name="line-height">
               <xsl:value-of select="sum(for $i in (current-group()) return css:length-to-double($i/@css:line-height)*css:length-to-double($i/@css:font-size))"></xsl:value-of>
           </xsl:variable>
@@ -50,11 +51,11 @@
     </xsl:copy>
   </xsl:template>
 <!-- height compensation in case of empty paragraphs in the beginning of the document. the first text containing paragraph receives the compensated space to its @margin-top   -->
-  <xsl:template match="para[preceding-sibling::para[1][not(./node()) and not(./text())]][exists(./text())][./position() = 1][not(exists(preceding-sibling::para[./text()]))]" priority="3">
+  <xsl:template match="para[preceding-sibling::para[1][descendant-or-self::node()[matches(., '^\s*$') or exists(./figure)]][matches(., '^\s*$')]][exists(./text() or ./local-name() = 'figure')][./position() = 1][not(exists(preceding-sibling::para[./text() or ./local-name() = 'figure']))]" priority="3">
     <xsl:copy>
       <xsl:apply-templates select="@*"/>
       <xsl:variable name="computed_space" as="xs:double*">
-      <xsl:for-each select="./preceding-sibling::para[not(./node()) and not(./text())]">
+      <xsl:for-each select="./preceding-sibling::para[not(./node()) and not(normalize-space())]">
           <xsl:variable name="line-height">
               <xsl:value-of select="css:length-to-double(@css:line-height)*css:length-to-double(@css:font-size)"></xsl:value-of>
           </xsl:variable>
@@ -75,6 +76,13 @@
     </xsl:copy>
   </xsl:template>
   
-  <xsl:template match="para[not(./node()) and not(./text())]" priority="3"/>
+  <xsl:template match="para[descendant-or-self::node()[matches(., '^\s*$') or exists(./figure)]][matches(., '^\s*$')]" priority="3" mode="#default">
+    <xsl:copy copy-namespaces="no">
+      <xsl:attribute name="sm:action" select="'delete'"/>
+      <xsl:apply-templates select="@srcpath" mode="#current"/>
+    </xsl:copy>
+  </xsl:template>
+  
+  <xsl:template match="para[@sm:action[. = 'delete']]" mode="remove-marked-para"/>
 
 </xsl:stylesheet>

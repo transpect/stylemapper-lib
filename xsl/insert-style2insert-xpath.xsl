@@ -19,6 +19,19 @@
 
   <xsl:key name="hub-element-by-srcpath" match="*[@srcpath]" use="concat($source-dir-uri, @srcpath)"/>
   <xsl:key name="marked-element-by-srcpath" match="*[@sm:action = 'delete'][@srcpath]" use="concat($source-dir-uri, @srcpath)"/>
+  
+  <xsl:function name="tr:get-new-spaces">
+    <xsl:param name="corresponding-hub-element" as="element()?"/>
+    <xsl:variable name="original-spaces" as="attribute()?">
+      <xsl:sequence select="$corresponding-hub-element/@css:*[matches(local-name(), 'orig-margin')]"/>
+    </xsl:variable>
+            <xsl:sequence
+              select="
+                for $x in $original-spaces
+                return
+                 $corresponding-hub-element/@*[local-name() = replace($x/local-name(), 'orig-', '')]"
+            />
+  </xsl:function>
 
   <xsl:template match="*|@*">
     <xsl:copy>
@@ -33,19 +46,22 @@
         </xsl:apply-templates>
       <xsl:attribute name="AppliedParagraphStyle" select="concat('ParagraphStyle/',key('hub-element-by-srcpath', @srcpath, $hub-doc)/@role)"></xsl:attribute>
       <xsl:apply-templates select="node()">
-        <xsl:with-param name="corresponding-hub-element" as="element(*  )?"
+        <xsl:with-param name="corresponding-hub-element" as="element(*)?"
           select="key('hub-element-by-srcpath', ./@srcpath, $hub-doc)" tunnel="yes"/>
       </xsl:apply-templates>    
     </xsl:copy>
   </xsl:template>
 
   <xsl:template match="CharacterStyleRange[key('hub-element-by-srcpath', @srcpath, $hub-doc)]" priority="2">
+    <xsl:param name="corresponding-hub-element" as="element()?"/>
     <xsl:copy>
       <xsl:apply-templates select="@*">
+        <xsl:with-param name="corresponding-hub-element" as="element(*)?"
+          select="key('hub-element-by-srcpath', ./@srcpath, $hub-doc)" tunnel="yes"/>
       </xsl:apply-templates>
       <xsl:attribute name="AppliedCharacterStyle" select="concat('CharacterStyle/',key('hub-element-by-srcpath', @srcpath, $hub-doc)/@role)"></xsl:attribute>
       <xsl:apply-templates select="node()">
-        <xsl:with-param name="corresponding-hub-element" as="element(*  )?"
+        <xsl:with-param name="corresponding-hub-element" as="element(*)?"
           select="key('hub-element-by-srcpath', ./@srcpath, $hub-doc)" tunnel="yes"/>
       </xsl:apply-templates>    
     </xsl:copy>
@@ -60,14 +76,11 @@
     </xsl:copy>
   </xsl:template>
 
-  <xsl:template match="CharacterStyleRange/@*[not(name() = ('AppliedCharacterStyle', 'srcpath'))]" priority="2">
+  <xsl:template match="CharacterStyleRange/@*[not(local-name() = ('AppliedCharacterStyle', 'srcpath'))]" priority="2">
     <xsl:param name="corresponding-hub-element" as="element(*)?" tunnel="yes"/>
-<!--    <xsl:message select="'param', $corresponding-hub-element" ></xsl:message>-->
-<!--    <xsl:message select="'correspoding-hub-element', $corresponding-hub-element/@sm:remove-adhoc" ></xsl:message>-->
     <xsl:variable name="prop" as="xs:string">
-      <xsl:apply-templates select="." mode="Attr2css"></xsl:apply-templates>
+      <xsl:apply-templates select="." mode="Attr2css"/>
     </xsl:variable>
-    <xsl:message select="'capitalisation triggered: ', $prop, name()"></xsl:message>
     <xsl:if test="not(tokenize($corresponding-hub-element/@sm:remove-adhoc, '\s+') = ($prop, '#all'))">
       <xsl:next-match/>
     </xsl:if>
@@ -75,6 +88,10 @@
   
   <xsl:template match="@Underline" mode="Attr2css">
     <xsl:sequence select="'text-decoration-style:underlined'"></xsl:sequence>
+  </xsl:template>
+  
+  <xsl:template match="@FillColor" mode="Attr2css">
+    <xsl:sequence select="'color'"></xsl:sequence>
   </xsl:template>
   
   <xsl:template match="@StrikeThru" mode="Attr2css">
@@ -214,14 +231,43 @@
   -->
   <!-- DOCX  -->
   
-  <xsl:template match="w:p[key('hub-element-by-srcpath', @srcpath, $hub-doc)[@layout-type = 'para']]" priority="2">
+  <xsl:template match="w:p[key('hub-element-by-srcpath', @srcpath, $hub-doc)]" priority="2">
+    <xsl:variable name="corresponding-hub-element" select="key('hub-element-by-srcpath', @srcpath, $hub-doc)" as="element()?"/>
     <xsl:copy>
       <xsl:apply-templates select="@*"/>
       <w:pPr>
         <w:pStyle w:val="{key('hub-element-by-srcpath', @srcpath, $hub-doc)/@role}"/>
-        <xsl:apply-templates select="w:pPr/* except w:pPr/w:pStyle"/>
+        <xsl:apply-templates select="w:pPr/* except (w:pPr/w:pStyle, w:pPr/w:spacing)">
+          <xsl:with-param name="corresponding-hub-element" as="element(*)?"
+            select="$corresponding-hub-element" tunnel="yes"/>
+        </xsl:apply-templates>
+        <xsl:choose>
+        <xsl:when test="not(exists(w:pPr/w:spacing)) and (some $x in $corresponding-hub-element/@css:* satisfies matches($x/local-name(), 'orig-margin')) and not(tokenize($corresponding-hub-element/@sm:remove-adhoc, '\s+') = ('#all'))">
+          <xsl:call-template name="generate-spacing-element">
+            <xsl:with-param name="corresponding-hub-element" select="$corresponding-hub-element" as="element()?"/>
+          </xsl:call-template>
+        </xsl:when>
+        <xsl:when test="exists(w:pPr/w:spacing) and (some $x in $corresponding-hub-element/@css:* satisfies matches($x/local-name(), 'orig-margin')) and not(tokenize($corresponding-hub-element/@sm:remove-adhoc, '\s+') = ('#all'))">
+         <xsl:message select="'PARA HAS SPACING ATTRRRR111', $corresponding-hub-element"></xsl:message>
+          <xsl:apply-templates select="w:pPr/w:spacing" mode="space-comp">
+           <xsl:with-param name="corresponding-hub-element" select="$corresponding-hub-element"/>
+         </xsl:apply-templates>
+        </xsl:when>
+        </xsl:choose>
       </w:pPr>
       <xsl:apply-templates select="* except w:pPr"/>
+    </xsl:copy>
+  </xsl:template>
+  
+  <xsl:template match="w:pPr/w:spacing" mode="space-comp">
+    <xsl:param name="corresponding-hub-element" as="element()?"/>
+    <xsl:message select="'PARA HAS SPACING ATTRRRR222', $corresponding-hub-element"></xsl:message>
+    <xsl:copy>
+    <!-- to apply other templates @* like  @w:line etc is maybe not a good move for a correct computed space compensation -->
+          <xsl:apply-templates select="@*"/>
+           <xsl:call-template name="generate-spacing-attributes">
+             <xsl:with-param name="corresponding-hub-element" select="$corresponding-hub-element"/>
+           </xsl:call-template>
     </xsl:copy>
   </xsl:template>
   
@@ -230,6 +276,11 @@
       <xsl:apply-templates select="@*"></xsl:apply-templates>
       <w:rPr>
         <w:rStyle w:val="{key('hub-element-by-srcpath', @srcpath, $hub-doc)/@role}"></w:rStyle>
+<!--          <xsl:message select="'HUB FROM w:r', ./ancestor::*[@srcpath][1]/@srcpath"></xsl:message>-->
+        <xsl:apply-templates select="w:rPr/* except w:rStyle">
+          <xsl:with-param name="corresponding-hub-element" as="element(*)?"
+            select="key('hub-element-by-srcpath', @srcpath, $hub-doc)" tunnel="yes"/>
+          </xsl:apply-templates>
       </w:rPr>
       <xsl:apply-templates select="* except w:rPr"></xsl:apply-templates>
     </xsl:copy>
@@ -238,10 +289,11 @@
   <xsl:template match="*[key('marked-element-by-srcpath', @srcpath, $hub-doc)]" priority="3"/>
   
   <xsl:template match="w:p[@srcpath]//w:rPr">
+<!--    <xsl:message select="'HUB FROM w:p//w:rPr', ./ancestor::w:p[@srcpath][1]/@srcpath"></xsl:message>-->
     <xsl:copy>
       <xsl:apply-templates select="@*, node()">
         <xsl:with-param name="corresponding-hub-element" as="element(*)?"
-          select="key('hub-element-by-srcpath', ancestor::*[2]/@srcpath, $hub-doc)" tunnel="yes"/>
+          select="key('hub-element-by-srcpath', ./ancestor::w:p[@srcpath][1]/@srcpath, $hub-doc)" tunnel="yes"/>
       </xsl:apply-templates>
     </xsl:copy>
   </xsl:template>
@@ -317,36 +369,92 @@
   <xsl:template match="w:shd" mode="w2css">
     <xsl:sequence select="'background-color'"/>
   </xsl:template>
-
+<!-- expandable collection of style properties that could be removed via @remove-adhoc-->
   <xsl:template
-    match="   w:u/@w:color 
-                        | w:u
-                        | w:u/@w:val 
-                        | w:i 
-                        | w:rFonts 
-                        | w:numPr 
-                        | w:color 
-                        | w:shd 
-                        | w:sz 
-                        | w:szCs 
-                        | w:vAlign 
-                        | w:textAlignment 
-                        | w:spacing/@w:line
-                        | w:ind/@w:firstLine
-                        | w:ind/@hanging
-                        | w:ind/@w:left
-                        | w:ind/@w:right
-                        | w:spacing/@w:before
-                        | w:spacing/@w:after
-                        | w:b
-                        ">
+    match="
+      w:u/@w:color
+      | w:u
+      | w:u/@w:val
+      | w:i
+      | w:rFonts
+      | w:numPr
+      | w:color
+      | w:shd
+      | w:sz
+      | w:jc
+      | w:szCs
+      | w:vAlign
+      | w:textAlignment
+      | w:spacing/@w:line
+      | w:ind/@w:firstLine
+      | w:ind/@hanging
+      | w:ind/@w:left
+      | w:ind/@w:right
+      | w:spacing/@w:before
+      | w:spacing/@w:after
+      | w:b
+      ">
     <xsl:param name="corresponding-hub-element" as="element(*)?" tunnel="yes"/>
-    <xsl:variable name="prop" as="xs:string">
+    <xsl:variable name="prop" as="xs:string?">
       <xsl:apply-templates select="." mode="w2css"/>
     </xsl:variable>
     <xsl:if test="not(tokenize($corresponding-hub-element/@sm:remove-adhoc, '\s+') = ($prop, '#all'))">
-      <xsl:next-match/>
+      <xsl:choose>
+        <xsl:when test="matches($prop, 'margin-bottom|margin-top')">
+          <xsl:apply-templates select="." mode="space-comp">
+            <xsl:with-param name="corresponding-hub-element" select="$corresponding-hub-element"/>
+          </xsl:apply-templates>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:next-match/>
+        </xsl:otherwise>
+      </xsl:choose>
     </xsl:if>
+  </xsl:template>
+  
+  <xsl:template name="generate-spacing-element">
+    <xsl:param name="corresponding-hub-element" as="element()?"/>
+    <xsl:variable name="new-spaces" select="tr:get-new-spaces($corresponding-hub-element)"/>
+    <xsl:message select="'NEWWWWWWWWWWWWWWWW SPAACES', $new-spaces,  $corresponding-hub-element/@srcpath"></xsl:message>
+    <xsl:element name="w:spacing">
+      <xsl:for-each select="$new-spaces">
+        <xsl:choose>
+          <xsl:when
+            test="not(tokenize($corresponding-hub-element/@sm:remove-adhoc, '\s+') = ('margin-bottom', '#all')) and current()/local-name() = 'margin-bottom'">
+            <xsl:attribute name="w:after" select="number(replace(current(), 'pt', '')) * 20"/>
+          </xsl:when>
+          <xsl:when
+            test="not(tokenize($corresponding-hub-element/@sm:remove-adhoc, '\s+') = ('margin-top', '#all')) and current()/local-name() = 'margin-top'">
+            <xsl:attribute name="w:before" select="number(replace(current(), 'pt', '')) * 20"/>
+          </xsl:when>
+        </xsl:choose>
+      </xsl:for-each>
+    </xsl:element>
+  </xsl:template>
+  
+  <xsl:template name="generate-spacing-attributes">
+    <xsl:param name="corresponding-hub-element" as="element()"/>
+    <xsl:variable name="new-spaces" select="tr:get-new-spaces($corresponding-hub-element)"/>
+    <xsl:for-each select="$new-spaces">
+      <xsl:choose>
+        <xsl:when test="current()/local-name() = 'margin-bottom'">
+          <xsl:attribute name="w:after" select="number(replace(current(), 'pt', '')) * 20"/>
+        </xsl:when>
+        <xsl:when test="current()/local-name() = 'margin-after'">
+          <xsl:attribute name="w:before" select="number(replace(current(), 'pt', '')) * 20"/>
+        </xsl:when>
+      </xsl:choose>
+    </xsl:for-each>
+  </xsl:template>
+  
+  <xsl:template match="w:spacing/@w:after | w:spacing/@w:before" mode="space-comp">
+    <xsl:param name="corresponding-hub-element" as="element()?"/>
+    <xsl:variable name="new-space" select="if (./local-name() = 'after') then $corresponding-hub-element/@css:margin-bottom else $corresponding-hub-element/@css:margin-top" as="attribute()?"/>
+    <xsl:message select="'SPACE_COMP##################################################', ., $new-space, $corresponding-hub-element/@srcpath"/>
+     <xsl:message select="'PARA HAS SPACING ATTRRRR333', $corresponding-hub-element"></xsl:message>
+    <xsl:copy>
+      <xsl:value-of select="number(replace($new-space, 'pt', '')) * 20"/>
+    </xsl:copy>
   </xsl:template>
 
 </xsl:stylesheet>

@@ -53,7 +53,7 @@
     </p:input>
   </p:xslt>
 
-  <tr:store-debug pipeline-step="mapping/generated-1-mapping2xsl-result" extension="xsl">
+  <tr:store-debug pipeline-step="mapping/1_generated-1-mapping2xsl-result" extension="xsl">
     <p:with-option name="active" select="$debug"/>
     <p:with-option name="base-uri" select="$debug-dir-uri"/>
   </tr:store-debug>
@@ -71,7 +71,7 @@
     </p:input>
   </p:xslt>
   
-  <tr:store-debug pipeline-step="mapping/make-format-explicit-debug">
+  <tr:store-debug pipeline-step="mapping/2_make-format-explicit-debug">
     <p:with-option name="active" select="$debug"/>
     <p:with-option name="base-uri" select="$debug-dir-uri"/>
   </tr:store-debug>
@@ -85,7 +85,7 @@
     </p:input>
   </p:xslt>
 
-  <tr:store-debug pipeline-step="mapping/extended-2-add-role-to-para">
+  <tr:store-debug pipeline-step="mapping/3_extended-2-add-role-to-para">
     <p:with-option name="active" select="$debug"/>
     <p:with-option name="base-uri" select="$debug-dir-uri"/>
   </tr:store-debug>
@@ -104,7 +104,7 @@
     </p:input>
   </p:xslt>
 
-  <tr:store-debug pipeline-step="mapping/insert-styles">
+  <tr:store-debug pipeline-step="mapping/4_insert-styles">
     <p:with-option name="active" select="$debug"/>
     <p:with-option name="base-uri" select="$debug-dir-uri"/>
   </tr:store-debug>
@@ -146,7 +146,7 @@
           </p:input>
         </p:replace>
 
-        <tr:store-debug pipeline-step="mapping/transplant-ffff">
+        <tr:store-debug pipeline-step="mapping/5_transplant-ffff">
           <p:with-option name="active" select="$debug"/>
           <p:with-option name="base-uri" select="$debug-dir-uri"/>
         </tr:store-debug>
@@ -163,7 +163,7 @@
           <p:with-option name="debug-dir-uri" select="$debug-dir-uri"/>
         </idml2xml:single-doc>
         
-        <tr:store-debug pipeline-step="mapping/single-tree-doc">
+        <tr:store-debug pipeline-step="mapping/6_single-tree-doc">
           <p:with-option name="active" select="$debug"/>
           <p:with-option name="base-uri" select="$debug-dir-uri"/>
         </tr:store-debug>
@@ -183,7 +183,7 @@
           </p:input>
         </p:replace>
         
-        <tr:store-debug pipeline-step="mapping/transplant">
+        <tr:store-debug pipeline-step="mapping/7_transplant">
           <p:with-option name="active" select="$debug"/>
           <p:with-option name="base-uri" select="$debug-dir-uri"/>
         </tr:store-debug>
@@ -200,24 +200,34 @@
       </p:input>
     </p:xslt>
 
-    <tr:store-debug pipeline-step="mapping/transplant-styles-4">
+    <tr:store-debug pipeline-step="mapping/8_transplant-styles-4">
       <p:with-option name="active" select="$debug"/>
       <p:with-option name="base-uri" select="$debug-dir-uri"/>
     </tr:store-debug>
 
-    <p:viewport match="/Document/*[local-name() = ('Styles', 'Story')]|/w:root/*[local-name() = ('styles', 'document')]" name="store-modified">
+    <p:viewport match="/Document/*[local-name() = ('Styles', 'Story')]|/w:root/*[local-name() = ('styles', 'document')]"
+      name="store-modified">
       <p:output port="result" primary="true">
         <p:empty/>
       </p:output>
+      <p:add-attribute match="/*[@xml:base][matches(local-name(), 'Styles|Story')]" attribute-name="xml:base">
+        <p:with-option name="attribute-value" select="replace(/*/@xml:base, 'designmap\.xml', '')"/>
+      </p:add-attribute>
       <p:add-attribute match="/*[@mc:Ignorable]" attribute-name="mc:Ignorable">
-        <p:with-option name="attribute-value" 
+        <p:with-option name="attribute-value"
           select="string-join(
                     for $root in /* 
                     return (tokenize(/*/@mc:Ignorable, '\s+')
                              [. = distinct-values(for $n in $root/descendant-or-self::* return in-scope-prefixes($n))]),
                     ' '
-                  )"/>
+                  )"
+        />
       </p:add-attribute>
+
+      <cx:message>
+        <p:with-option name="message" select="'XXXXXXXXXXXXXXXXXXXXXXXXXXX',/*/@xml:base"/>
+        <p:with-option name="log" select="'info'"/>
+      </cx:message>
       <p:store>
         <p:with-option name="href" select="/*/@xml:base"/>
       </p:store>

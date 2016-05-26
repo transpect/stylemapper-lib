@@ -24,16 +24,19 @@
     <xsl:sequence select="tokenize($tokens, '\s+') = $token"/>
   </xsl:function>
   
-  <xsl:template match="para[not(normalize-space())]
+  
+  
+<!--  <xsl:template match="para[not(normalize-space())]
                            [
                               following-sibling::*[normalize-space()][1]
                               /self::para[tr:contains-token(@mapping-rules, 'margin-top')]
-                           ]">
+                           ]" mode="mark-deleted">
     <xsl:copy>
+      <xsl:message select="."></xsl:message>
       <xsl:attribute name="sm:action" select="'delete'"/>
       <xsl:apply-templates select="@*,node()" mode="#current"/>
     </xsl:copy>
-  </xsl:template>
+  </xsl:template>-->
 
   <xsl:template match="*[local-name() = ('phrase', 'subscript', 'superscript')]
                         [@srcpath]">

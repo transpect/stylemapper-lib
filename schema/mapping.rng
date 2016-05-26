@@ -62,6 +62,8 @@
               <attribute name="color-h"/>
               <attribute name="color-s"/>
               <attribute name="color-l"/>
+            </group>
+            <group>
               <attribute name="background-color-h"/>
               <attribute name="background-color-s"/>
               <attribute name="background-color-l"/>
@@ -74,6 +76,8 @@
                 <attribute name="color-max-h"/>
                 <attribute name="color-max-s"/>
                 <attribute name="color-max-l"/>
+              </group>
+              <group>
                 <attribute name="background-color-min-h"/>
                 <attribute name="background-color-min-s"/>
                 <attribute name="background-color-min-l"/>
@@ -94,6 +98,8 @@
 
   <define name="layout-props">
     <choice>
+      <value>color</value>
+      <value>background-color</value>
       <value>font-size</value>
       <value>font-weight</value>
       <value>font-family</value>

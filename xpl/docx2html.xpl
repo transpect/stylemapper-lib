@@ -60,7 +60,7 @@
     <p:with-option name="unwrap-tooltip-links" select="'yes'"/>
   </docx2hub:convert>
  
-  <tr:store-debug pipeline-step="docx2html/hub_without_episode">
+  <tr:store-debug pipeline-step="docx2html/1_hub_without_episode">
     <p:with-option name="active" select="$debug"/>
     <p:with-option name="base-uri" select="$debug-dir-uri"/>
   </tr:store-debug>
@@ -86,6 +86,7 @@
     <p:with-option name="replace" select="concat('''', p:system-property('p:episode'),'_docx','''')"></p:with-option>
   </p:string-replace>
   
+  
   <p:xslt name="docx2hub_extended">
   <p:input port="stylesheet">
     <p:document href="http://transpect.io/stylemapper/xsl/docx2hub_extended.xsl"/>
@@ -95,16 +96,25 @@
     </p:input>
   </p:xslt>
 
-  <tr:store-debug pipeline-step="docx2html/extended_deleted_phrases">
+  <tr:store-debug pipeline-step="docx2html/2_extended_deleted_phrases">
     <p:with-option name="active" select="$debug"/>
     <p:with-option name="base-uri" select="$debug-dir-uri"/>
   </tr:store-debug>
-  <p:sink/>
   
-  <p:xslt name="docx2hub_space_comp">
-    <p:input port="source">
-      <p:pipe port="result" step="docx2hub_extended"></p:pipe>
+  <p:xslt name="add-attributes">
+    <p:input port="source"/>
+    <p:input port="stylesheet">
+      <p:document href="http://transpect.io/stylemapper/xsl/add-attributes.xsl"/>
     </p:input>
+    <p:input port="parameters">
+      <p:empty/>
+    </p:input>
+  </p:xslt>
+  
+  
+  <p:xslt name="docx2hub-space-comp">
+    <p:input port="source"/>
+    
       <p:input port="stylesheet">
         <p:document href="http://transpect.io/stylemapper/xsl/docx2hub_space_comp.xsl"/>
       </p:input>
@@ -112,24 +122,32 @@
         <p:empty/>
       </p:input>
   </p:xslt>
-  
-  <p:xslt name="add-attributes">
-    <p:input port="source"></p:input>
-    <p:input port="stylesheet">
-      <p:document href="http://transpect.io/stylemapper/xsl/add-attributes.xsl"></p:document>
-    </p:input>
-    <p:input port="parameters">
-      <p:empty/>
-    </p:input>
-  </p:xslt>
 
   <p:store name="save-hub">
     <p:with-option name="href" select="concat($main-uri, '/',p:system-property('p:episode'),'/',p:system-property('p:episode'), '_hub.xml')"/>
   </p:store>
+  
+    <p:xslt name="docx2hub-space-comp-remove-para" initial-mode="remove-marked-para">
+    <p:input port="source">
+      <p:pipe port="result" step="docx2hub-space-comp"></p:pipe>
+    </p:input>
+      <p:input port="stylesheet">
+        <p:document href="http://transpect.io/stylemapper/xsl/docx2hub_space_comp.xsl"/>
+      </p:input>
+      <p:input port="parameters">
+        <p:empty/>
+      </p:input>
+  </p:xslt>  
+  
+  <tr:store-debug pipeline-step="docx2html/3_removed-para-for-export">
+    <p:with-option name="active" select="$debug"/>
+    <p:with-option name="base-uri" select="$debug-dir-uri"/>
+  </tr:store-debug>
+  
 
   <hub2htm:convert name="hub2htm-convert">
     <p:input port="source">
-      <p:pipe port="result" step="add-attributes"></p:pipe>
+      <p:pipe port="result" step="docx2hub-space-comp-remove-para"></p:pipe>
     </p:input>
     <p:input port="paths">
       <p:pipe port="result" step="paths"/>

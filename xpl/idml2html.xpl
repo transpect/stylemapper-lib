@@ -51,9 +51,7 @@
       <p:document href="http://customers.le-tex.de/generic/book-conversion/conf/transpect-conf.xml"/>
     </p:input>
   </tr:paths>
-
-  <p:sink/>
-
+<p:sink/>
   <idml2xml:hub name="idml2hub">
     <p:with-option name="idmlfile" select="$file"/>
     <p:with-option name="srcpaths" select="'yes'"/>
@@ -62,7 +60,7 @@
     <p:with-option name="status-dir-uri" select="'status'"/>
   </idml2xml:hub>
   
-  <tr:store-debug pipeline-step="idml2html/idml_hub">
+  <tr:store-debug pipeline-step="idml2html/1-idml_hub">
     <p:with-option name="active" select="$debug"/>
     <p:with-option name="base-uri" select="$debug-dir-uri"/>
   </tr:store-debug>
@@ -70,7 +68,7 @@
 
   <p:insert name="add-episode-keyword" match="/*/dbk:info" position="last-child">
     <p:input port="source">
-      <p:pipe port="result" step="idml2hub"></p:pipe>
+      <p:pipe port="result" step="idml2hub"/>
     </p:input>
     <p:input port="insertion">
       <p:inline>
@@ -85,7 +83,7 @@
     <p:with-option name="replace" select="concat('''', p:system-property('p:episode'), '_idml','''')"></p:with-option>
   </p:string-replace>
   
-  <tr:store-debug pipeline-step="idml2html/hub_with_episode">
+  <tr:store-debug pipeline-step="idml2html/2-hub_with_episode">
     <p:with-option name="active" select="$debug"/>
     <p:with-option name="base-uri" select="$debug-dir-uri"/>
   </tr:store-debug>
@@ -103,29 +101,28 @@
     </p:input>
   </p:xslt>
 
-  <tr:store-debug pipeline-step="idml2html/extended_deleted_phrases">
+  <tr:store-debug pipeline-step="idml2html/3-extended_deleted_phrases">
     <p:with-option name="active" select="$debug"/>
     <p:with-option name="base-uri" select="$debug-dir-uri"/>
   </tr:store-debug>
   <p:sink/>
 
-  <p:xslt name="docx2hub_space_comp">
+  <p:xslt name="add-attributes">
     <p:input port="source">
       <p:pipe port="result" step="docx2hub_extended"/>
     </p:input>
     <p:input port="stylesheet">
-      <p:document href="http://transpect.le-tex.de/stylemapper/xsl/docx2hub_space_comp.xsl"/>
+      <p:document href="http://transpect.le-tex.de/stylemapper/xsl/add-attributes.xsl"></p:document>
     </p:input>
     <p:input port="parameters">
       <p:empty/>
     </p:input>
   </p:xslt>
-  
-  
-  <p:xslt name="add-attributes">
+
+  <p:xslt name="docx2hub_space_comp">
     <p:input port="source"></p:input>
     <p:input port="stylesheet">
-      <p:document href="http://transpect.le-tex.de/stylemapper/xsl/add-attributes.xsl"></p:document>
+      <p:document href="http://transpect.le-tex.de/stylemapper/xsl/docx2hub_space_comp.xsl"/>
     </p:input>
     <p:input port="parameters">
       <p:empty/>
@@ -190,7 +187,7 @@
       <p:with-option name="debug-dir-uri" select="$debug-dir-uri"/>
     </idml2xml:single-doc>
 
-  <tr:store-debug pipeline-step="idml2html/template-singletree">
+  <tr:store-debug pipeline-step="idml2html/4-template-singletree">
     <p:with-option name="active" select="$debug"/>
     <p:with-option name="base-uri" select="$debug-dir-uri"/>
   </tr:store-debug>
