@@ -166,7 +166,7 @@
   </hub2htm:convert>
 
   <p:xslt name="p-block2inline">
-    <p:input port="source"></p:input>
+    <p:input port="source"/>
     <p:input port="stylesheet">
       <p:document href="http://transpect.io/stylemapper/xsl/block2inline.xsl"></p:document>
     </p:input>

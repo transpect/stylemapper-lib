@@ -153,6 +153,16 @@
     <p:with-option name="status-dir-uri" select="$status-dir-uri"/>
   </hub2htm:convert>
   
+  <p:xslt name="p-block2inline">
+    <p:input port="source"/>
+    <p:input port="stylesheet">
+      <p:document href="http://transpect.io/stylemapper/xsl/block2inline.xsl"></p:document>
+    </p:input>
+    <p:input port="parameters">
+      <p:empty></p:empty>
+    </p:input>
+  </p:xslt>
+  
   <p:store name="save-xhtml">
     <p:with-option name="href" select="concat($temp-dir-uri,'/', 'source-content.xhtml')"/>
   </p:store>
