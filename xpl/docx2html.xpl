@@ -168,15 +168,17 @@
   <p:xslt name="p-block2inline">
     <p:input port="source"/>
     <p:input port="stylesheet">
-      <p:document href="http://transpect.io/stylemapper/xsl/block2inline.xsl"></p:document>
+      <p:document href="http://transpect.io/stylemapper/xsl/block2inline.xsl"/>
     </p:input>
     <p:input port="parameters">
       <p:empty></p:empty>
     </p:input>
   </p:xslt>
   
+  <p:rename match="@srcpath" new-name="data-srcpath"/>
+  
   <p:store name="save-xhtml">
-    <p:with-option name="href" select="concat($temp-dir-uri,'/source-content.xhtml')"></p:with-option>
+    <p:with-option name="href" select="concat($temp-dir-uri,'/source-content.xhtml')"/>
   </p:store>
   
   <p:identity>
@@ -191,7 +193,7 @@
  
   <p:identity>
     <p:input port="source">
-      <p:pipe port="insert-xpath" step="docx2hub"></p:pipe>
+      <p:pipe port="insert-xpath" step="docx2hub"/>
     </p:input>
   </p:identity>
   
@@ -212,7 +214,7 @@
   
   <p:xslt name="extract-wstyles">
     <p:input port="stylesheet">
-      <p:document href="http://transpect.io/stylemapper/xsl/extract-template-styles.xsl"></p:document>
+      <p:document href="http://transpect.io/stylemapper/xsl/extract-template-styles.xsl"/>
     </p:input>
     <p:input port="parameters">
       <p:empty></p:empty>
