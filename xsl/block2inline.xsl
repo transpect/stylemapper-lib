@@ -18,17 +18,17 @@
     
   <xsl:template match="html:span/@style">
     <xsl:variable name="var">
-      <xsl:value-of select="."></xsl:value-of>
+      <xsl:value-of select="."/>
     </xsl:variable>
     <xsl:choose>
       <xsl:when test="contains(., '(display:.?)(block|inherit)')">
         <xsl:attribute name="style">
-          <xsl:value-of select="replace(., '(display:.?)(block|inherit)', 'display: inline')"></xsl:value-of>
+          <xsl:value-of select="replace(., '(display:.?)(block|inherit)', 'display: inline')"/>
         </xsl:attribute>
       </xsl:when>
       <xsl:otherwise>
         <xsl:attribute name="style">
-          <xsl:value-of select="concat(., '; display: inline')"></xsl:value-of>
+          <xsl:value-of select="concat(., '; display: inline')"/>
         </xsl:attribute>
       </xsl:otherwise>
     </xsl:choose>
@@ -40,9 +40,17 @@
       <xsl:attribute name="data-view-priority"/>
       <xsl:element name="span">
         <xsl:attribute name="class" select="'prev pa'"/> ¶ 
+        <xsl:call-template name="checkbox-for-rule-selection"/>
       </xsl:element>
       <xsl:apply-templates select="node()"/>
     </xsl:copy>
+  </xsl:template>
+  
+  <xsl:template name="checkbox-for-rule-selection">
+    <xsl:element name="input">
+      <xsl:attribute name="type" select="'checkbox'"/>
+      <xsl:attribute name="class" select="'check_select'"/>
+    </xsl:element>
   </xsl:template>
   
   <xsl:template match="html:span[@srcpath]">
@@ -52,6 +60,7 @@
     <xsl:element name="span">
       <xsl:attribute name="class" select="'prev in'"/>
       T
+        <xsl:call-template name="checkbox-for-rule-selection"/>
     </xsl:element>
     <xsl:apply-templates select="node()"/>
     </xsl:copy>
