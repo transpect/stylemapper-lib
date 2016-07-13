@@ -40,8 +40,14 @@
   </xsl:function>
   
   <xsl:template match="mapping">
+    <xsl:variable name="target-type">
+      <xsl:apply-templates select="@target-type"/>
+    </xsl:variable>
     <xsl:variable name="predicates" as="xs:string+">
-      <xsl:apply-templates select="@target-type, prop"/>
+      
+      <xsl:apply-templates select="$target-type, prop, @attached">
+        <xsl:with-param name="target-type" select="$target-type"/>
+      </xsl:apply-templates>
     </xsl:variable>
     <xslout:template match="*{$predicates}" priority="{./@priority}">
       <xslout:copy>
@@ -60,6 +66,7 @@
       </xslout:copy>
     </xslout:template>
   </xsl:template>
+  
   <xsl:template match="@target-type[. = 'para']">
     <xsl:text>[name() = ('para', 'title', 'simpara')]</xsl:text>
   </xsl:template>
@@ -74,6 +81,21 @@
   <xsl:template match="prop[not(@target-type)]/*"/>
   
   <xsl:template match="prop[not(@relevant = 'true')]" priority="2"/>
+  
+  <xsl:template match="@attached">
+    <xsl:param name="target-type" as="xs:string?"></xsl:param>
+    <xsl:variable name="attached-src-sequence" as="xs:string*">
+      <xsl:sequence select="tokenize(., ' ')"></xsl:sequence>
+    </xsl:variable>
+    <xsl:text>|*</xsl:text>
+    <xsl:value-of select="$target-type"/>
+    <xsl:text>[@srcpath =(</xsl:text>
+    <xsl:value-of select="string-join(
+                            for $i in $attached-src-sequence 
+                              return concat('''', $i, '''')
+                           , ',')"/>
+    <xsl:text> )] </xsl:text>    
+  </xsl:template>
 
   <xsl:template match="prop">
     <xsl:variable name="conditions" as="xs:string*">
@@ -107,7 +129,7 @@
  
   <xsl:template match="@regex">
     <xsl:text>matches(</xsl:text>
-    <xsl:apply-templates select="../@name" mode='name2expression'></xsl:apply-templates>
+    <xsl:apply-templates select="../@name" mode='name2expression'/>
     <xsl:text>,'</xsl:text>
     <xsl:value-of select="."/>
     <xsl:text>')</xsl:text>
