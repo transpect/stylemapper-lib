@@ -113,10 +113,6 @@
     <p:variable name="file-base-uri" select="base-uri(*)">
       <p:pipe port="single-tree-doc" step="stylemapper"/>
     </p:variable>
-  <cx:message>
-    <p:with-option name="message" select="'OHOHOHOHOHO', $file-base-uri"></p:with-option>
-    <p:with-option name="log" select="'info'"></p:with-option>
-  </cx:message>
     
     <p:choose>
       <p:when test="ends-with($template, '.docx') or ends-with($template, '.dotm')">
@@ -131,12 +127,7 @@
             <p:with-option name="attribute-value" select="concat($file-base-uri, replace(/*/@xml:base, '^.+\.tmp/', ''))"/>
           </p:add-attribute>
         </p:viewport>
-        
-       <!-- <cx:message>
-          <p:with-option name="message" select="'zzzzzzzzzzzzzzzzzzz', concat($file-base-uri, replace(/*/@xml:base, '^.+\.tmp/', ''))"></p:with-option>
-          <p:with-option name="log" select="'info'"></p:with-option>
-        </cx:message>-->
- 
+    
         <p:replace match="/w:root/w:styles" name="replace-styles">
           <p:input port="source">
             <p:pipe port="result" step="insert-style"/>
@@ -223,12 +214,8 @@
                   )"
         />
       </p:add-attribute>
-
-      <cx:message>
-        <p:with-option name="message" select="'XXXXXXXXXXXXXXXXXXXXXXXXXXX',/*/@xml:base"/>
-        <p:with-option name="log" select="'info'"/>
-      </cx:message>
-      <p:store>
+      
+    <p:store>
         <p:with-option name="href" select="/*/@xml:base"/>
       </p:store>
     </p:viewport>
